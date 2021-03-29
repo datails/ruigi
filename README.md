@@ -84,7 +84,7 @@ class InterestingDataTask(Task):
 
 Read our [docs]() for a lot of examples of more interesting things you can do.
 
-** Summary: **  
+### Summary: 
 With ruigi's Task, you can create tasks of a pipeline.  
 With ruigi's Target, you can define how the outputs of these tasks are saved (and loaded later).  
 With ruigi's Parameter, you can make your pipeline dynamic.
