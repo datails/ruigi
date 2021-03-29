@@ -93,7 +93,6 @@ from .targets import (
     KerasTarget,
     DummyTarget,
     JsonTarget,
-    FeatherTarget,
     PytorchTarget,
     ParquetTarget,
     FileTarget,
