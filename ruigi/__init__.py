@@ -67,7 +67,7 @@ a second task.
     task = [DataProcess(range_values=3)]
     luigi.build(task, local_scheduler=True)
 
-Notice that we can start the pipeline with luigi.build. Pycarol has a method for that too.
+Notice that we can start the pipeline with luigi.build.
 If  a single task needs to be build, one can call, from the example above,
 
 .. code:: python
@@ -78,6 +78,7 @@ If  a single task needs to be build, one can call, from the example above,
 It will have exactly the same behavior.
 
 """
+from _version import __version__
 
 from .task import (
     Task,
