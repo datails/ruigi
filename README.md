@@ -39,9 +39,9 @@ class MySecondAwesomeTask(Task):
         return "Hello World, again!"
 ```
 
-3. Run your pipeline
+3. Build and run your pipeline
 ```
-MySecondAwesomeTask().run()
+MySecondAwesomeTask().buildme()
 ```
 
 4. Add some parameters
@@ -103,7 +103,7 @@ Create a pull request with the name "I_DID_IT" with your post and how we can con
 ## Why not use Airflow or other pipeline tool?
 
 There are only two types of people in the world: those who create pipelines with ruigi
-and those that don't. We know who have fun programming pipelines and those who don't.
+and those that don't. We know who have fun programming pipelines.
 
 Just kidding, we don't believe in bulletproofs tools, there are always pros and cons,
 but at least give it a try yourself using ruigi in one of your projects. There are some
