@@ -65,6 +65,7 @@ class InterestingPipeline(Task):
     def easy_run(self, inputs):
         for i in inputs:
             print(i)
+        return 'Done!'
 ```
 
 6. Stop playing around and start working with data
@@ -81,7 +82,7 @@ class InterestingDataTask(Task):
         return df
 ```
 
-Read our (docs)[] for a lot of examples of more interesting things you can do.
+Read our [docs]() for a lot of examples of more interesting things you can do.
 
 ** Summary: **  
 With ruigi's Task, you can create tasks of a pipeline.  
@@ -92,8 +93,8 @@ With ruigi's Parameter, you can make your pipeline dynamic.
 
 Never think again of pipelines, learn how to program them naturally with ruigi.
 
-1. Understand the building blocks (read our (docs)[], it is very cool)
-2. Get familiar with his father Luigi (read their (docs)[], it is very friendly)
+1. Understand the building blocks (read our [docs](), it is very cool)
+2. Get familiar with his father Luigi (read their [docs](https://luigi.readthedocs.io/en/stable/), it is very friendly)
 3. Create and share pipelines, or targets. Also, share the good news to the world and let us know.*
 
 * If your post reaches a lot of people, we'll give you some small gift. If it doesn't, we might give as well.
@@ -116,5 +117,5 @@ always use luigi when you feel to. It's just easier with ruigi.
 
 ## Contributing
 Life is not always rainbows and butterflies. Help us deal with this fact.
-Pull Requests are more than welcome. Just get familiar with (standards)[] before doing so,
+Pull Requests are more than welcome. Just get familiar with [standards]() before doing so,
 it will help A LOT. Let's build this together :)
