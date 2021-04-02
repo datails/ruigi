@@ -80,6 +80,14 @@ It will have exactly the same behavior.
 """
 from ._version import __version__
 
+from luigi import (
+    Parameter, OptionalParameter, DateParameter, MonthParameter, YearParameter, 
+    DateHourParameter, DateMinuteParameter, DateSecondParameter, IntParameter,
+    FloatParameter, BoolParameter, DateIntervalParameter, TimeDeltaParameter, TaskParameter,
+    EnumParameter, DictParameter, ListParameter, TupleParameter, NumericalParameter,
+    ChoiceParameter,     
+    )
+
 from .task import (
     Task,
     WrapperTask,
@@ -88,7 +96,7 @@ from .task import (
 )
 
 from .targets import (
-    CDSTarget,
+    CloudTarget,
     PickleTarget,
     KerasTarget,
     DummyTarget,

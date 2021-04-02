@@ -1,6 +1,7 @@
 import luigi
 import pandas as pd
 import os
+
 import joblib
 import warnings
 
@@ -34,7 +35,7 @@ class LocalTarget(luigi.LocalTarget):
     def get_metadata_path(self, *args,**kwargs):
         return f"{self.path}.metadata"        
 
-class CDSTarget(LocalTarget):
+class CloudTarget(LocalTarget):
     """ A target that works both locally and on Carol Data Storage, based on env parameter CLOUD_TARGET
 
     In order to use Carol Data Storage Targets, env or files configuration should allow Carol authentication
@@ -49,14 +50,10 @@ class CDSTarget(LocalTarget):
     def __init__(self, task, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
 
-        self._is_cloud_target = task.is_cloud_target
+        self._is_cloud_target = task.cloud_target_backend is not None 
 
         if self._is_cloud_target:
-            from pycarol.carol import Carol
-            from pycarol.storage import Storage
-
-            self.storage = None  #TODO: define some kind of backend for the cloud storage. How to do this. Backend should have the methods: load, save, delete and exists.  
-    
+            self.storage = task.cloud_target_backend 
             namespace = task.get_task_namespace()
             file_id = task._file_id()
             file_id = file_id.split(namespace+'.')[-1] #this will prevent to copy all the module path to the name of the file.
@@ -68,14 +65,14 @@ class CDSTarget(LocalTarget):
     def dump_metadata(self, metadata:dict, *args,**kwargs):
         if self._is_cloud_target:
             assert isinstance(metadata, dict)
-            self.storage.save(self.get_metadata_path(), metadata, format='joblib', cache=False)
+            self.storage.save(self.get_metadata_path(), metadata, format='joblib',)
         else:
             super().dump_metadata(metadata, *args, **kwargs)
 
     def load_metadata(self, *args, **kwargs):
         """Should return a dict."""
         if self._is_cloud_target:
-            metadata = self.storage.load(self.get_metadata_path(), format='joblib', cache=False)
+            metadata = self.storage.load(self.get_metadata_path(), format='joblib',)
             assert isinstance(metadata,dict), f"metadata is type {type(metadata)}"
             return metadata
         else:
@@ -127,7 +124,7 @@ class CDSTarget(LocalTarget):
         return self.storage.exists(self.path)
     
 
-class FileTarget(CDSTarget):
+class FileTarget(CloudTarget):
     """
     This target operates with filepaths.
     easy_run should return a filepath for a local temporary file. This file will be removed after been sent to Carol.
@@ -140,21 +137,21 @@ class FileTarget(CDSTarget):
     # TODO NOW: Define how it should be done locally
 
     def load_cds(self):
-        return self.storage.load(self.path, format='file', cache=False)
+        return self.storage.load(self.path, format='file')
 
     def dump_cds(self, tempfile_path):
-        self.storage.save(self.path, tempfile_path, format='file', cache=False)
+        self.storage.save(self.path, tempfile_path, format='file',)
         os.remove(tempfile_path)
 
 
-class PickleTarget(CDSTarget):
+class PickleTarget(CloudTarget):
     FILE_EXT = 'pkl'
 
     def load_cds(self):
-        return self.storage.load(self.path, format='joblib', cache=False)
+        return self.storage.load(self.path, format='joblib')
 
     def dump_cds(self, function_output):
-        self.storage.save(self.path, function_output, format='joblib', cache=False)
+        self.storage.save(self.path, function_output, format='joblib')
 
     def load_local(self):
         return joblib.load(self.path)
@@ -164,14 +161,14 @@ class PickleTarget(CDSTarget):
         joblib.dump(function_output, self.path)
 
 
-class ParquetTarget(CDSTarget):
+class ParquetTarget(CloudTarget):
     FILE_EXT = 'parquet'
 
     def load_cds(self, **kwargs):
-        return self.storage.load(self.path, format='joblib', cache=True, parquet=True, **kwargs)
+        return self.storage.load(self.path, format='parquet', **kwargs)
 
     def dump_cds(self, function_output):
-        self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
+        self.storage.save(self.path, function_output, format='parquet',)
 
     def load_local(self, **kwargs):
         return pd.read_parquet(self.path, **kwargs)
@@ -181,7 +178,7 @@ class ParquetTarget(CDSTarget):
         function_output.to_parquet(self.path)
 
 
-class KerasTarget(CDSTarget):
+class KerasTarget(CloudTarget):
     FILE_EXT = 'h5'
 
     def load_cds(self):
@@ -203,7 +200,7 @@ class KerasTarget(CDSTarget):
         model.save(self.path)
 
 
-class PytorchTarget(CDSTarget):
+class PytorchTarget(CloudTarget):
     FILE_EXT = 'pth'
 
     def load_cds(self):
@@ -248,7 +245,7 @@ class DummyTarget:
         pass
 
 
-class JsonTarget(CDSTarget):
+class JsonTarget(CloudTarget):
     FILE_EXT = 'json'
 
     # TODO NOW: Define how to do that on the CDS

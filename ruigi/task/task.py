@@ -44,15 +44,15 @@ class Task(luigi.Task):
     """
     TARGET_DIR = './TARGETS/'
     target_type = PickleTarget
-    is_cloud_target = None
+    cloud_target_backend = None
     requires_list = []
     requires_dict = {}
 
     task_function = None
     task_notebook = None
     easy_run = None
-    version = '0.0.0'
     metadata = {}
+    version = '0.0.0'
 
     def get_task_address(self):
         if self.task_notebook:
@@ -92,10 +92,6 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if hasattr(self,'TARGET'):  # Check for deprecated use
-            warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
-            return self.TARGET(self)
-
         return self.target_type(self)
 
     def load(self, **kwargs):
