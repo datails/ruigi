@@ -8,11 +8,13 @@ import tempfile
 from retry import retry
 from google.resumable_media import DataCorruption
 from google.api_core.exceptions import GatewayTimeout, ServiceUnavailable
+from google.oauth2 import service_account
+from google.cloud import storage
 
 _RETRY_LIST = (GatewayTimeout, DataCorruption, ServiceUnavailable)
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'ruigi')
 
-class StorageGCS:
+class GoogleStorage:
     def __init__(self, service_account_path, project, bucket_name, parent_folder='', ):
         os.makedirs(__TEMP_STORAGE__, exist_ok=True)
 
@@ -26,8 +28,7 @@ class StorageGCS:
         Initialize GCP back-end
 
         """
-        from google.oauth2 import service_account
-        from google.cloud import storage
+
         #TODO: USe envs variables.
         gcp_credentials = service_account.Credentials.from_service_account_file(service_account_path)
         self.client = storage.Client(credentials=gcp_credentials, project=project)

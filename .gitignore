@@ -4,7 +4,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+cred.json
+get_token.py
+workspace.code-workspace
+.vscode
 # C extensions
 *.so
 
