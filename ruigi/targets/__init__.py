@@ -1,7 +1,7 @@
 from .targets import (
     PickleTarget,
     DummyTarget,
-    CDSTarget,
+    CloudTarget,
     FileTarget,
     JsonTarget,
     KerasTarget,

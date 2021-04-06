@@ -8,7 +8,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 min_requires = [
-    'luigi'
+    'luigi', "retry"
 ]
 
 extras_require = {

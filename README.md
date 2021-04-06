@@ -52,7 +52,7 @@ class MyTaskWithParameters(Task):
     a = Parameter(default='nothing')
 
     def easy_run(self, inputs):
-        return "My Task now prints {a}"
+        return f"My Task now prints {self.a}"
 ```
 
 5. Create some dynamic pipelines
