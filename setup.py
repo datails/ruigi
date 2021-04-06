@@ -25,14 +25,8 @@ def read(*parts):
     with codecs.open(os.path.join(here, *parts), 'r') as fp:
         return fp.read()
 
-readme_note = """\
-.. note::
-   For the latest source, discussion, etc, please visit the
-   `GitHub repository <https://github.com/datails/ruigi>`_\n\n
-"""
-
 with open('README.md') as fobj:
-    long_description = readme_note + fobj.read()
+    long_description = fobj.read()
 
 
 def find_version(*file_paths):
