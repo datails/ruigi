@@ -35,7 +35,7 @@ class MyFirstAwesomeTask(Task):
 @inherit_list(MyFirstAwesomeTask)
 class MySecondAwesomeTask(Task):
     def easy_run(self, inputs):
-        print('I got the {inputs[0]}')
+        print(f'I got the {inputs[0]}')
         return "Hello World, again!"
 ```
 
@@ -52,7 +52,7 @@ class MyTaskWithParameters(Task):
     a = Parameter(default='nothing')
 
     def easy_run(self, inputs):
-        return "My Task now prints {a}"
+        return f"My Task now prints {self.a}"
 ```
 
 5. Create some dynamic pipelines
