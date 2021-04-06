@@ -99,12 +99,12 @@ class CloudTarget(LocalTarget):
 
     def remove(self, *args, **kwargs):
         if self.has_storage:
-            return self.remove_cds(*args, **kwargs)
+            return self.remove_storage(*args, **kwargs)
         return self.remove_local(*args, **kwargs)
 
     def exists(self, *args, **kwargs):
         if self.has_storage:
-            return self.exists_cds(*args, **kwargs)
+            return self.exists_storage(*args, **kwargs)
         return self.exists_local(*args, **kwargs)
 
     def load_local(self, *args, **kwargs):
@@ -119,10 +119,10 @@ class CloudTarget(LocalTarget):
     def remove_local(self, *args, **kwargs):
         return super().remove()
 
-    def remove_cds(self, *args, **kwargs):
+    def remove_storage(self, *args, **kwargs):
         self.storage.delete(self.path)
 
-    def exists_cds(self, *args, **kwargs):
+    def exists_storage(self, *args, **kwargs):
         return self.storage.exists(self.path)
 
 
