@@ -56,7 +56,7 @@ setup(
     license='Datails',
     description='Manage your pipelines easily.',
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/x-md",
     author='Datails',
     maintainer='Datails',
     author_email='',
