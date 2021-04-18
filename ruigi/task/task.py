@@ -30,10 +30,10 @@ class Task(luigi.Task):
         1. No need to define the method 'output` and manually save the output`. Just return the object to be saved
         in the `easy_run` method.
         2. No need to define the requirements using the `require` method. It is possible to use
-        :py:class:`pycarol.pipeline.inherit_list` and :py:class:`pycarol.pipeline.inherit_dict` decorators.
+        :py:class:`ruigi.inherit_list` and :py:class:`ruigi.inherit_dict` decorators.
         3. No need to load manually the input task. `easy_run` method will receive a list of all the requirements loaded
-        in the same order they were defined in :py:class:`pycarol.pipeline.inherit_list` or the dictionary if it was used
-        :py:class:`pycarol.pipeline.inherit_dict`
+        in the same order they were defined in :py:class:`ruigi.inherit_list` or the dictionary if it was used
+        :py:class:`ruigi.inherit_dict`
 
 
     There are two ways to execute the computation of a task.
@@ -43,16 +43,16 @@ class Task(luigi.Task):
 
     """
     TARGET_DIR = './TARGETS/'
-    target_type = PickleTarget
-    is_cloud_target = None
+    _target = PickleTarget
+    _storage = None
     requires_list = []
     requires_dict = {}
 
     task_function = None
     task_notebook = None
     easy_run = None
-    version = '0.0.0'
     metadata = {}
+    version = '0.0.0'
 
     def get_task_address(self):
         if self.task_notebook:
@@ -92,11 +92,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if hasattr(self,'TARGET'):  # Check for deprecated use
-            warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
-            return self.TARGET(self)
-
-        return self.target_type(self)
+        return self._target(self)
 
     def load(self, **kwargs):
         return self.output().load(**kwargs)

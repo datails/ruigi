@@ -1,8 +1,10 @@
 import luigi
 import pandas as pd
 import os
+
 import joblib
 import warnings
+
 
 class LocalTarget(luigi.LocalTarget):
     FILE_EXT = ''
@@ -16,96 +18,93 @@ class LocalTarget(luigi.LocalTarget):
         if path is None:
             file_id = task._file_id()
             ext = '.' + self.FILE_EXT
-            file_id = file_id.split(namespace+'.')[-1]  #this will prevent to copy all the module path to the name of the file.
+            # this will prevent to copy all the module path to the name of the file.
+            file_id = file_id.split(namespace+'.')[-1]
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
     def dump_metadata(self, metadata: dict,  *args, **kwargs):
         warnings.warn("dump_metadata not implemented in LocalTarget")
 
-    def load_metadata(self, *args,**kwargs):
+    def load_metadata(self, *args, **kwargs):
         """Should return a dict."""
         warnings.warn("load_metadata not implemented in LocalTarget")
         return {}
 
-    def remove_metadata(self, *args,**kwargs):
+    def remove_metadata(self, *args, **kwargs):
         warnings.warn("remove_metadata not implemented in LocalTarget")
 
-    def get_metadata_path(self, *args,**kwargs):
-        return f"{self.path}.metadata"        
+    def get_metadata_path(self, *args, **kwargs):
+        return f"{self.path}.metadata"
 
-class CDSTarget(LocalTarget):
-    """ A target that works both locally and on Carol Data Storage, based on env parameter CLOUD_TARGET
 
-    In order to use Carol Data Storage Targets, env or files configuration should allow Carol authentication
-    with no parameters, Carol().
-    If more than one tenant are used in same session, luigi parameter "tenant" should exist.
+class CloudTarget(LocalTarget):
+    """ A target that works both locally and on any storage defined in Task._storage
 
     """
-    login_cache = None
-    tenant_cache = None
-    storage_cache = None
 
     def __init__(self, task, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
 
-        self._is_cloud_target = task.is_cloud_target
+        self.has_storage = task._storage is not None
 
-        if self._is_cloud_target:
-            from pycarol.carol import Carol
-            from pycarol.storage import Storage
-
-            self.storage = None  #TODO: define some kind of backend for the cloud storage. How to do this. Backend should have the methods: load, save, delete and exists.  
-    
+        if self.has_storage:
+            self.storage = task._storage
             namespace = task.get_task_namespace()
             file_id = task._file_id()
-            file_id = file_id.split(namespace+'.')[-1] #this will prevent to copy all the module path to the name of the file.
-            self._local_path = self.path    # Save a copy of the local path, before modifying it: This is useful when
-                                            # the target needs to use a local path
-            self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
-            self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
+            # this will prevent to copy all the module path to the name of the file.
+            file_id = file_id.split(namespace+'.')[-1]
+            # Save a copy of the local path, before modifying it: This is useful when
+            self._local_path = self.path
+            # the target needs to use a local path
+            self.path = os.path.join(
+                'pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
+            self.log_path = os.path.join(
+                'pipeline', namespace, "{}_log.pkl".format(file_id))
 
-    def dump_metadata(self, metadata:dict, *args,**kwargs):
-        if self._is_cloud_target:
+    def dump_metadata(self, metadata: dict, *args, **kwargs):
+        if self.has_storage:
             assert isinstance(metadata, dict)
-            self.storage.save(self.get_metadata_path(), metadata, format='joblib', cache=False)
+            self.storage.save(self.get_metadata_path(),
+                              metadata, format='joblib',)
         else:
             super().dump_metadata(metadata, *args, **kwargs)
 
     def load_metadata(self, *args, **kwargs):
         """Should return a dict."""
-        if self._is_cloud_target:
-            metadata = self.storage.load(self.get_metadata_path(), format='joblib', cache=False)
-            assert isinstance(metadata,dict), f"metadata is type {type(metadata)}"
+        if self.has_storage:
+            metadata = self.storage.load(
+                self.get_metadata_path(), format='joblib',)
+            assert isinstance(
+                metadata, dict), f"metadata is type {type(metadata)}"
             return metadata
         else:
-            return super().load_metadata(*args,**kwargs)
+            return super().load_metadata(*args, **kwargs)
 
-    def remove_metadata(self,*args,**kwargs):
-        if self._is_cloud_target:
+    def remove_metadata(self, *args, **kwargs):
+        if self.has_storage:
             self.storage.delete(self.get_metadata_path())
         else:
-            return super().load_metadata(*args,**kwargs)
-
+            return super().load_metadata(*args, **kwargs)
 
     def load(self, *args, **kwargs):
-        if self._is_cloud_target:
-            return self.load_cds(*args, **kwargs)
+        if self.has_storage:
+            return self.load_storage(*args, **kwargs)
         return self.load_local(*args, **kwargs)
 
     def dump(self, *args, **kwargs):
-        if self._is_cloud_target:
-            return self.dump_cds(*args, **kwargs)
+        if self.has_storage:
+            return self.dump_storage(*args, **kwargs)
         return self.dump_local(*args, **kwargs)
 
     def remove(self, *args, **kwargs):
-        if self._is_cloud_target:
-            return self.remove_cds(*args, **kwargs)
+        if self.has_storage:
+            return self.remove_storage(*args, **kwargs)
         return self.remove_local(*args, **kwargs)
 
     def exists(self, *args, **kwargs):
-        if self._is_cloud_target:
-            return self.exists_cds(*args, **kwargs)
+        if self.has_storage:
+            return self.exists_storage(*args, **kwargs)
         return self.exists_local(*args, **kwargs)
 
     def load_local(self, *args, **kwargs):
@@ -120,14 +119,14 @@ class CDSTarget(LocalTarget):
     def remove_local(self, *args, **kwargs):
         return super().remove()
 
-    def remove_cds(self, *args, **kwargs):
+    def remove_storage(self, *args, **kwargs):
         self.storage.delete(self.path)
 
-    def exists_cds(self, *args, **kwargs):
+    def exists_storage(self, *args, **kwargs):
         return self.storage.exists(self.path)
-    
 
-class FileTarget(CDSTarget):
+
+class FileTarget(CloudTarget):
     """
     This target operates with filepaths.
     easy_run should return a filepath for a local temporary file. This file will be removed after been sent to Carol.
@@ -139,22 +138,22 @@ class FileTarget(CDSTarget):
 
     # TODO NOW: Define how it should be done locally
 
-    def load_cds(self):
-        return self.storage.load(self.path, format='file', cache=False)
+    def load_storage(self):
+        return self.storage.load(self.path, format='file')
 
-    def dump_cds(self, tempfile_path):
-        self.storage.save(self.path, tempfile_path, format='file', cache=False)
+    def dump_storage(self, tempfile_path):
+        self.storage.save(self.path, tempfile_path, format='file',)
         os.remove(tempfile_path)
 
 
-class PickleTarget(CDSTarget):
+class PickleTarget(CloudTarget):
     FILE_EXT = 'pkl'
 
-    def load_cds(self):
-        return self.storage.load(self.path, format='joblib', cache=False)
+    def load_storage(self):
+        return self.storage.load(self.path, format='joblib')
 
-    def dump_cds(self, function_output):
-        self.storage.save(self.path, function_output, format='joblib', cache=False)
+    def dump_storage(self, function_output):
+        self.storage.save(self.path, function_output, format='joblib')
 
     def load_local(self):
         return joblib.load(self.path)
@@ -164,14 +163,14 @@ class PickleTarget(CDSTarget):
         joblib.dump(function_output, self.path)
 
 
-class ParquetTarget(CDSTarget):
+class ParquetTarget(CloudTarget):
     FILE_EXT = 'parquet'
 
-    def load_cds(self, **kwargs):
-        return self.storage.load(self.path, format='joblib', cache=True, parquet=True, **kwargs)
+    def load_storage(self, **kwargs):
+        return self.storage.load(self.path, format='parquet', **kwargs)
 
-    def dump_cds(self, function_output):
-        self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
+    def dump_storage(self, function_output):
+        self.storage.save(self.path, function_output, format='parquet',)
 
     def load_local(self, **kwargs):
         return pd.read_parquet(self.path, **kwargs)
@@ -181,15 +180,15 @@ class ParquetTarget(CDSTarget):
         function_output.to_parquet(self.path)
 
 
-class KerasTarget(CDSTarget):
+class KerasTarget(CloudTarget):
     FILE_EXT = 'h5'
 
-    def load_cds(self):
+    def load_storage(self):
         from keras.models import load_model
         local_path = self.storage.load(self.path, format='file')
         return load_model(local_path)
 
-    def dump_cds(self, model):
+    def dump_storage(self, model):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         model.save(self.path)
         self.storage.save(self.path, self.path, format='file')
@@ -203,15 +202,15 @@ class KerasTarget(CDSTarget):
         model.save(self.path)
 
 
-class PytorchTarget(CDSTarget):
+class PytorchTarget(CloudTarget):
     FILE_EXT = 'pth'
 
-    def load_cds(self):
+    def load_storage(self):
         import torch
         local_path = self.storage.load(self.path, format='file')
         return torch.load(local_path)
 
-    def dump_cds(self, model_state_dict):
+    def dump_storage(self, model_state_dict):
         import torch
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         torch.save(model_state_dict, self.path)
@@ -248,17 +247,13 @@ class DummyTarget:
         pass
 
 
-class JsonTarget(CDSTarget):
+class JsonTarget(CloudTarget):
     FILE_EXT = 'json'
-
-    # TODO NOW: Define how to do that on the CDS
 
     def load_local(self):
         return pd.read_json(self.path)
 
     def dump_local(self, function_output):
-        #TODO: json only works for dataframe
+        # TODO: json only works for dataframe
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         function_output.to_json(self.path)
-
-
