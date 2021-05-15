@@ -78,7 +78,7 @@ If  a single task needs to be build, one can call, from the example above,
 It will have exactly the same behavior.
 
 """
-from ._version import __version__
+__version__ = "0.0.0"
 
 from luigi import (
     Parameter, OptionalParameter, DateParameter, MonthParameter, YearParameter, 

@@ -12,7 +12,7 @@ min_requires = [
 ]
 
 extras_require = {
-    "dev": min_requires + ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
+    "dev": ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
 }
 extras_require["complete"] = sorted(
     {v for req in extras_require.values() for v in req}
@@ -25,14 +25,8 @@ def read(*parts):
     with codecs.open(os.path.join(here, *parts), 'r') as fp:
         return fp.read()
 
-readme_note = """\
-.. note::
-   For the latest source, discussion, etc, please visit the
-   `GitHub repository <https://github.com/datails/ruigi>`_\n\n
-"""
-
 with open('README.md') as fobj:
-    long_description = readme_note + fobj.read()
+    long_description = fobj.read()
 
 
 def find_version(*file_paths):
@@ -52,11 +46,11 @@ setup(
     name='ruigi',
     setup_requires=["wheel"],
     packages=find_packages(exclude=['docs', 'doc']),
-    version=find_version("ruigi/_version.py"),
+    version=find_version("ruigi/__init__.py"),
     license='Datails',
     description='Manage your pipelines easily.',
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     author='Datails',
     maintainer='Datails',
     author_email='',
