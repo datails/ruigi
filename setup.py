@@ -12,7 +12,7 @@ min_requires = [
 ]
 
 extras_require = {
-    "dev": min_requires + ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
+    "dev": ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
 }
 extras_require["complete"] = sorted(
     {v for req in extras_require.values() for v in req}
@@ -46,7 +46,7 @@ setup(
     name='ruigi',
     setup_requires=["wheel"],
     packages=find_packages(exclude=['docs', 'doc']),
-    version=find_version("ruigi/_version.py"),
+    version=find_version("ruigi/__init__.py"),
     license='Datails',
     description='Manage your pipelines easily.',
     long_description=long_description,
