@@ -1,16 +1,16 @@
 from ruigi import Task, inherit_list, Parameter
-from ruigi.backends.gcp import GoogleStorage
+from ruigi.backends.aws import S3Storage
+import os
 
 bucket_name = 'my-bucket'
 parent_folder = 'folder-to-save-in-bucket'
-project = 'my-project'
-service_account_path = 'creds.json'
 
-#This will define this Storage for all tasks.
-Task._storage = GoogleStorage(
-    project=project, bucket_name=bucket_name, parent_folder=parent_folder,
-    service_account_path=service_account_path,
-)
+aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+# This will define this Storage for all tasks.
+Task._storage = S3Storage(bucket_name=bucket_name, aws_access_key_id=aws_access_key_id,
+                          aws_secret_access_key=aws_secret_access_key, parent_folder=parent_folder)
 
 
 class MyTaskWithParameters(Task):

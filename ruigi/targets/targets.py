@@ -1,10 +1,9 @@
 import luigi
-import pandas as pd
 import os
-
+import pandas as pd
 import joblib
 import warnings
-
+from luigi.task import flatten
 
 class LocalTarget(luigi.LocalTarget):
     FILE_EXT = ''
