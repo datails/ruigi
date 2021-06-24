@@ -210,7 +210,7 @@ def get_app_from_pipeline(pipe):
         return "Removing upstream from:\n" + json.dumps(nodes)
 
     def cb_dummy(*args,**kwargs):
-        return "Updating complete targets."
+        return "Updating complete target."
 
     @app.callback(
         Output('buttons_output', 'children'),

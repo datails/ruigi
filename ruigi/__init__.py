@@ -6,8 +6,8 @@ This module defines a framework for building and managing data pipelines. It was
 inspired in Luigi's architecture and has it as a backend for the
 implementation of the pipeline execution.
 
-In submodule targets, luigi targets classes are implemented. Some of these
-targets, make use of Carol Data Storage and are a key feature for running the
+In submodule target, luigi target classes are implemented. Some of these
+target, make use of Carol Data Storage and are a key feature for running the
 pipeline in the cloud.
 
 In submodule tasks, we found Ruigi's extension to luigi.Task class. This new
@@ -21,10 +21,10 @@ This inserts an abstraction layer over luigi and provides some features that
 are not supported in luigi.
 
 An app pipeline is mainly described using classes from submodules tasks and
-targets. Finally, the top pipeline tasks together with the pipeline
+target. Finally, the top pipeline tasks together with the pipeline
 parameters definitions are used to instantiate an object of class Pipe,
 from submodule tools. This object should be used to make all interactions
-with the pipeline, like running, removing targets and related actions.
+with the pipeline, like running, removing target and related actions.
 
 Finally, submodule viewer implements a dash web app to visualize an object Pipe
 and, thus, visualize a given pipeline. This web app has also a jupyter
@@ -95,7 +95,7 @@ from .task import (
     inherit_dict
 )
 
-from .targets import (
+from .target import (
     CloudTarget,
     PickleTarget,
     KerasTarget,

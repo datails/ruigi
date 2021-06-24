@@ -1,0 +1,7 @@
+{# Import the theme's layout. #}
+{% extends "!layout.html" %}
+
+{%- block htmltitle %}
+  {{ super() }}
+  <link rel="icon" href="{{ pathto('_static/icons/favicon.ico', 1) }}">
+{%- endblock %}

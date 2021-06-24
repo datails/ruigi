@@ -37,7 +37,7 @@ class Pipe(object):
         
 
     def remove_all(self):
-        """Remove all targets related to this pipeline."""
+        """Remove all target related to this pipeline."""
         for t in self.all_tasks:
             try:
                 t.remove()
@@ -45,7 +45,7 @@ class Pipe(object):
                 pass
 
     def remove_upstream(self, tasks:list):
-        """Remove all targets in this pipeline that depend on the given tasks."""
+        """Remove all target in this pipeline that depend on the given tasks."""
         assert isinstance(tasks,list)
         traverse_dag_generator = breadth_first_search( self.rev_dag,tasks)
         for task_list in traverse_dag_generator:
@@ -56,7 +56,7 @@ class Pipe(object):
                     pass
     
     def remove_orphans(self):
-        """Remove all targets for which respective downstream targets are not complete"""
+        """Remove all target for which respective downstream target are not complete"""
 
         downstream_complete_dict = {}
         _downstream_complete(self.dag, self.top_nodes, downstream_complete_dict)
@@ -69,7 +69,7 @@ class Pipe(object):
                     pass
 
     def remove_obsolete(self):
-        """Remove all targets whose hash_versions do not match to current version"""
+        """Remove all target whose hash_versions do not match to current version"""
         return
 
     def update_all_complete_status(self):
@@ -190,7 +190,7 @@ def _luigi_get_sons(task) -> list:
     if isinstance(task,tuple):
         # this case happens when we use local params in tasks require
         task, params = task
-    return task.requires_list
+    return task._requires_list
 
 
 def _get_dag_from_task(task:list) -> dict:

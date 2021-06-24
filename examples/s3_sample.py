@@ -1,5 +1,5 @@
 from ruigi import Task, inherit_list, Parameter
-from ruigi.backends.aws import S3Storage
+from ruigi.storage.aws import S3Storage
 import os
 
 bucket_name = 'my-bucket'

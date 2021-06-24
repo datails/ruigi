@@ -74,7 +74,7 @@ def test_get_task_by_id_raises():
 
 
 # def test_remove_obsolete():
-#     # need to implement metadata in targets
+#     # need to implement metadata in target
 # test hard to automate
 def test_tasks_are_instance():
     from ._tools import _tasks_are_instance

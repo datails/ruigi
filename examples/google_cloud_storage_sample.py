@@ -1,5 +1,5 @@
 from ruigi import Task, inherit_list, Parameter
-from ruigi.backends.gcp import GoogleStorage
+from ruigi.storage.gcp import GoogleStorage
 
 bucket_name = 'my-bucket'
 parent_folder = 'folder-to-save-in-bucket'

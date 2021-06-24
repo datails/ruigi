@@ -1,17 +1,15 @@
 """
-
-
 """
-
 import luigi
 from luigi import parameter
 from luigi.task import flatten
 from luigi.parameter import ParameterVisibility
-from ruigi.targets import PickleTarget
 import logging
 import warnings
 import types
 
+from ..target import PickleTarget
+from ..storage.local import LocalStorage
 
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
@@ -44,15 +42,16 @@ class Task(luigi.Task):
     """
     TARGET_DIR = './TARGETS/'
     _target = PickleTarget
-    _storage = None
-    requires_list = []
-    requires_dict = {}
+    # _target_args = {}  # Additional arguments to use when initializing target
+    _storage = LocalStorage()
+
+    _requires_list = []
+    _requires_dict = {}
 
     task_function = None
     task_notebook = None
     easy_run = None
-    metadata = {}
-    version = '0.0.0'
+    _metadata = {}
 
     def get_task_address(self):
         if self.task_notebook:
@@ -68,9 +67,9 @@ class Task(luigi.Task):
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
 
     def requires(self):
-        if len(self.requires_list) > 0:
+        if len(self._requires_list) > 0:
             result_list = []
-            for t in self.requires_list:
+            for t in self._requires_list:
                 fixed_params = {}
                 if type(t) is tuple:
                     fixed_params = t[1]
@@ -78,9 +77,9 @@ class Task(luigi.Task):
                 task_instance = self.clone(t, **fixed_params)
                 result_list.append(task_instance)
             return result_list
-        elif len(self.requires_dict) > 0:
+        elif len(self._requires_dict) > 0:
             result_dict = {}
-            for k, t in self.requires_dict.items():
+            for k, t in self._requires_dict.items():
                 fixed_params = {}
                 if type(t) is tuple:
                     fixed_params = t[1]
@@ -106,14 +105,16 @@ class Task(luigi.Task):
 
     def save(self):
         self.output().dump(self.output_object)
-        self.output().dump_metadata(self.metadata())
+        self.output().dump_metadata(self.create_metadata())
 
-    def metadata(self):
-        metadata = dict()
-        metadata['hash_version'] = self.hash_version()
-        metadata['version'] = self.version
-        metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        return metadata
+    def create_metadata(self):
+        self._metadata = dict()
+        self._metadata['hash_version'] = self.hash_version()
+        self._metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
+        target = self.output()
+        if hasattr(target, 'path'):
+            self._metadata['target_path'] = target.path
+        return self._metadata
 
     def run(self):
         if self.easy_run:
@@ -137,12 +138,12 @@ class Task(luigi.Task):
 
         elif self.task_function:
             inputs = self.function_inputs()
-            if not isinstance(inputs,list):
+            if not isinstance(inputs, list):
                 raise NotImplementedError(
                     f"In task_function mode, inputs should be list, not {type(inputs)}"
-                    )
+                )
             params = self.get_execution_params(only_significant=True)
-            assert hasattr(self.task_function,'__func__'), "We need unbound method"
+            assert hasattr(self.task_function, '__func__'), "We need unbound method"
             f = self.task_function.__func__
             self.output_object = f(*inputs, **params)
             self.save()
@@ -150,7 +151,7 @@ class Task(luigi.Task):
 
         elif self.task_notebook:
             import papermill
-            #TODO: create output folder
+            # TODO: create output folder
             papermill.execute_notebook(
                 self.task_notebook,
                 # f"executed_notebook/{self.task_notebook}",
@@ -178,15 +179,14 @@ class Task(luigi.Task):
                                       f"received {type(self.input())}")
         return function_inputs
 
-
-    def hash_version(self,):
+    def hash_version(self, ):
         """ Returns the hash of the task considering only function, not the parameters."""
         from ..utils.hash_versioning import get_function_hash
         if not self.task_function:
             warnings.warn(
-                "hash versioning only works in task_function mode. "\
-                "It will return dummy hash code",SyntaxWarning
-                )
+                "hash versioning only works in task_function mode. " \
+                "It will return dummy hash code", SyntaxWarning
+            )
             return 0
         else:
             try:
@@ -269,12 +269,10 @@ class Task(luigi.Task):
             if (((not only_significant) or params[param_name].significant)
                     and ((not only_public) or params[param_name].visibility == ParameterVisibility.PUBLIC)
                     and params[param_name].visibility != ParameterVisibility.PRIVATE):
-
-                #TODO: Should we save the :class: luigi.Parameter itself?
+                # TODO: Should we save the :class: luigi.Parameter itself?
                 params_str[param_name] = param_value
 
         return params_str
-
 
     def load_input_params(self, input_target):
         """
@@ -287,11 +285,13 @@ class Task(luigi.Task):
         """
         return {}
 
-#TODO: remove either WrapperTask or Dummy Target
+
+# TODO: remove either WrapperTask or Dummy Target
 class WrapperTask(Task):
     """
     Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
     """
+
     def run(self):
         pass
 
@@ -326,16 +326,16 @@ class inherit_list(object):
     def __init__(self, *task_to_inherit_list):
         self.requires_list = list(task_to_inherit_list)
         # next, we use hashable dict in local task params to support pipeline viewer
-        for i,v in enumerate(self.requires_list):
-            if isinstance(v,tuple):
+        for i, v in enumerate(self.requires_list):
+            if isinstance(v, tuple):
                 task, params = v
-                assert issubclass(task,Task)
-                assert isinstance(params,dict)
-                self.requires_list[i] = ( task, Hashabledict(params) )
+                assert issubclass(task, Task)
+                assert isinstance(params, dict)
+                self.requires_list[i] = (task, Hashabledict(params))
 
     def __call__(self, task_that_inherits):
-        task_that_inherits.requires_list = self.requires_list
-        for task_to_inherit in task_that_inherits.requires_list:
+        task_that_inherits._requires_list = self.requires_list
+        for task_to_inherit in task_that_inherits._requires_list:
             # Get all parameter objects from the underlying task
             task_that_inherits = set_attributes(task_to_inherit, task_that_inherits)
 
@@ -343,14 +343,14 @@ class inherit_list(object):
 
 
 class inherit_dict(object):
-    #TODO: hash versioning is not compatible with inherit_dict
+    # TODO: hash versioning is not compatible with inherit_dict
     def __init__(self, **task_to_inherit_dict):
         self.requires_dict = task_to_inherit_dict
 
     def __call__(self, task_that_inherits):
-        task_that_inherits.requires_dict = self.requires_dict
+        task_that_inherits._requires_dict = self.requires_dict
 
-        for key, task_to_inherit in task_that_inherits.requires_dict.items():
+        for key, task_to_inherit in task_that_inherits._requires_dict.items():
             # Get all parameter objects from the underlying task
             task_that_inherits = set_attributes(task_to_inherit, task_that_inherits)
         return task_that_inherits

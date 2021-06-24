@@ -23,14 +23,13 @@ class S3Storage:
         self.aws_session_token = aws_session_token
         self.bucket_name = bucket_name
         self.parent_folder = parent_folder
-        self._init()
+        self._init_client()
 
-    def _init(self,):
+    def _init_client(self,):
         """
         Initialize S3 back-end
 
         """
-
         # TODO: USe envs variables.
         self.client = boto3.resource(
             's3',

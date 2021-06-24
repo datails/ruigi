@@ -1,6 +1,6 @@
 import luigi
 import os
-from ..targets import DummyTarget, PickleTarget
+from ..target import DummyTarget, PickleTarget
 from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
@@ -24,57 +24,6 @@ logger = logging.getLogger(__name__)
     If your test case involves Luigi Extension related tasks, use 'Flow' keyword. E.g. TestFlowMyTest. This way, pipeline 
     extension updates will be able to be checked.
 """
-
-
-def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, **env_params):
-    """ Execute a pipeline pipeline
-    :param task:
-    :param parameters: dict
-    :return: instance of class TaskOutput:
-            success: bool,
-            worker: worker object,
-            task: instance task
-            task_history: pipeline's worker _add_task_history
-            history_has(task, status, ignore_parameters=False): whether task history has or not that task and status.
-                Obs. If you want to ignore parameter, make sure task is a class and not an instance.
-    """
-    if parameters is None:
-        parameters = {}
-
-    if "no_lock" not in env_params:
-        env_params["no_lock"] = True
-
-    if "local_scheduler" not in env_params:
-        env_params["local_scheduler"] = True
-
-    out = dict()
-    # TODO Get only parameters that are used in task_instance. Similar to self.clone
-    task_instance = task(**parameters)
-    out['task'] = task_instance
-    exec_out = luigi.interface._schedule_and_run([task_instance], worker_scheduler_factory,
-                                                 override_defaults=env_params)
-    # TODO: Check luigi version
-    # if luigi.__version__
-    out.update({'success': exec_out.status==LuigiStatusCode.SUCCESS})
-    task_history = exec_out.worker._add_task_history
-    out.update({'task_history': task_history})
-
-    def history_has(task, status, ignore_parameters=True):
-        if not ignore_parameters:
-            for t, s, _ in task_history:
-                if task == t and status == s:
-                    return True
-            return False
-        else:
-            for t, s, _ in task_history:
-                if task.__name__ == t.__class__.__name__ and status == s:
-                    return True
-            return False
-
-    out.update({'history_has': history_has})
-
-    # TODO Get execution stacktrace
-    return namedtuple("TaskOutput", out.keys())(*out.values())
 
 
 def pipeline_test(cls):
@@ -136,6 +85,7 @@ class mock_task:
                     if 'task_parameters' in dic:
                         # TODO handle cases of user having same task with different parameters
                         pass
+
                     else:
                         if 'task_output' in dic:
                             out_target = DummyTarget(fixed_output=task_output)
@@ -157,6 +107,7 @@ class mock_task:
                                 patch.object(task, 'output', return_value=out_target)),
                             stack.enter_context(
                                 patch.object(task, 'complete', return_value=True))])
+
                 exec_func(self, *args, **kwargs)
 
         return patched_func
@@ -207,9 +158,3 @@ class mock_task_wrapper:
 class TaskA(Task):
     def easy_run(self, inputs):
         return True
-
-
-def test_task_execution_debug():
-    out = task_execution_debug(TaskA)
-    assert out.success
-    assert out.history_has(TaskA, 'DONE')
