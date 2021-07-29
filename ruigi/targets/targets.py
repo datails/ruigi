@@ -58,9 +58,9 @@ class CloudTarget(LocalTarget):
             self._local_path = self.path
             # the target needs to use a local path
             self.path = os.path.join(
-                'pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
+                task.TARGET_DIR, namespace, "{}.{}".format(file_id, self.FILE_EXT))
             self.log_path = os.path.join(
-                'pipeline', namespace, "{}_log.pkl".format(file_id))
+                task.TARGET_DIR, namespace, "{}_log.pkl".format(file_id))
 
     def dump_metadata(self, metadata: dict, *args, **kwargs):
         if self.has_storage:
