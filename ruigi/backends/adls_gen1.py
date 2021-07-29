@@ -17,7 +17,7 @@ class ADLSStorage:
         self.parent_folder = parent_folder
         self._init(**kwargs)
 
-    def _init(self, token=None, store_name=None, resource=None):
+    def _init(self, token=None, store_name=None, resource=None, creds=None):
         """
         Initialize Azure back-end
         """
@@ -27,7 +27,8 @@ class ADLSStorage:
         self.base_url = f"adl://{self.store_name}.azuredatalakestore.net"
 
         if self.token is None:
-            creds = lib.auth(url_suffix=self.store_name, resource=resource)
+            if creds is None:
+                creds = lib.auth(url_suffix=self.store_name, resource=resource)
             self.client = core.AzureDLFileSystem(creds, store_name=self.store_name)
         else:
             self.client = core.AzureDLFileSystem(token=token, store_name=self.store_name)
