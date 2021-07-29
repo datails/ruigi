@@ -33,12 +33,11 @@ class StorageTest():
         stg = self.get_storage()
         try:
             stg.save(remote_file_path, df, format='pickle')
-            self.assertTrue(stg.exists(remote_file_path+'.pkl'))
+            self.assertTrue(stg.exists(remote_file_path))
             df_remote = stg.load(remote_file_path, format='pickle')
             pd_test.assert_frame_equal(df, df_remote)
         finally:
-            pass
-            # stg.delete(remote_file_path+'.pkl')
+            stg.delete(remote_file_path)
 
     def test_upload_and_download_parquet(self):
         remote_file_path = self.get_base_test_path() + '/TEST_REMOTE_FILE'
@@ -47,12 +46,12 @@ class StorageTest():
         stg = self.get_storage()
         try:
             stg.save(remote_file_path, df, format='parquet')
-            self.assertTrue(stg.exists(remote_file_path+'.parquet'))
+            self.assertTrue(stg.exists(remote_file_path))
             df_remote = stg.load(remote_file_path, format='parquet')
             pd_test.assert_frame_equal(df, df_remote)
 
         finally:
-            stg.delete(remote_file_path+'.parquet')
+            stg.delete(remote_file_path)
 
 
 if __name__ == '__main__':

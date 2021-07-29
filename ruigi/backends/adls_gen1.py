@@ -67,7 +67,7 @@ class ADLSStorage:
                 obj = obj.toPandas()
             try:
                 obj.to_parquet(local_file_name)
-                self._upload_local(local_file_name, remote_file_name+'.parquet')
+                self._upload_local(local_file_name, remote_file_name)
             finally:
                 os.remove(local_file_name)
 
@@ -82,7 +82,7 @@ class ADLSStorage:
             try:
                 with gzip.open(local_file_name, 'wb') as f:
                     pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-                self._upload_local(local_file_name, remote_file_name+'.pkl')
+                self._upload_local(local_file_name, remote_file_name)
             finally:
                 os.remove(local_file_name)
 
@@ -125,11 +125,11 @@ class ADLSStorage:
                 return joblib.load(fr)
 
         if format == 'parquet':
-            with self.client.open(remote_file_name+'.parquet', 'rb') as fr:
+            with self.client.open(remote_file_name, 'rb') as fr:
                 return pd.read_parquet(fr, columns=columns)
 
         elif format == 'pickle':
-            with self.client.open(remote_file_name+'.pkl', 'rb') as fr:
+            with self.client.open(remote_file_name, 'rb') as fr:
                 try:
                     # Load ZIP
                     with open(local_file_name, 'wb') as fw:
