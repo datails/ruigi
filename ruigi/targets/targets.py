@@ -5,6 +5,7 @@ import joblib
 import warnings
 from luigi.task import flatten
 
+
 class LocalTarget(luigi.LocalTarget):
     FILE_EXT = ''
     is_tmp = False

@@ -8,12 +8,14 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 min_requires = [
-    'luigi', "retry", 'joblib', 'pandas'
+    'luigi', "retry", 'joblib', 'pandas', 'pyarrow'
 ]
 
 extras_require = {
     "dev": ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
+    "azure": ['azure-datalake-store', 'adlfs']
 }
+
 extras_require["complete"] = sorted(
     {v for req in extras_require.values() for v in req}
 )
