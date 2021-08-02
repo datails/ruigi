@@ -119,3 +119,13 @@ always use luigi when you feel to. It's just easier with ruigi.
 Life is not always rainbows and butterflies. Help us deal with this fact.
 Pull Requests are more than welcome. Just get familiar with [standards]() before doing so,
 it will help A LOT. Let's build this together :)
+
+
+Release process
+----------------
+1. Open a PR with your change for `main` branch;
+2. Once approved, merge into `master`;
+3. Locally, checkout to `master` branch;
+4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
+5. Push your commit and tag; i.e. `git push` and `git push --tag`
+6. A gitHub action will create the pypi release.
