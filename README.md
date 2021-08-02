@@ -124,8 +124,8 @@ it will help A LOT. Let's build this together :)
 Release process
 ----------------
 1. Open a PR with your change for `main` branch;
-2. Once approved, merge into `master`;
-3. Locally, checkout to `master` branch;
+2. Once approved, merge into `main`;
+3. Locally, checkout to `main` branch;
 4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
 5. Push your commit and tag; i.e. `git push` and `git push --tag`
 6. A gitHub action will create the pypi release.
