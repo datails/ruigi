@@ -40,7 +40,7 @@ class S3Storage:
         )
         self.bucket = self.client.Bucket(self.bucket_name)
 
-    def save(self, name, obj, format='pickle', chunk_size=None):
+    def save(self, name, obj, format='pickle', engine='pandas', chunk_size=None):
         """
         Args:
             name: `str`.
@@ -85,7 +85,7 @@ class S3Storage:
         self.bucket.upload_file(local_file_name, remote_file_name)
 
     @retry(_RETRY_LIST, tries=5)
-    def load(self, name, format='pickle', columns=None, chunk_size=None):
+    def load(self, name, format='pickle', columns=None, engine='pandas', spark=None, chunk_size=None):
         """
         Args:
             name: `str`.

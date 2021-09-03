@@ -167,18 +167,33 @@ class ParquetTarget(CloudTarget):
     FILE_EXT = 'parquet'
 
     def load_storage(self, **kwargs):
-        return self.storage.load(self.path, format='parquet', **kwargs)
+        if self.task._engine=='spark':
+            spark = self.task.get_spark_session()
+            return self.storage.load(self.path, format='parquet', engine=self.task._engine, spark=spark, **kwargs)
+        return self.storage.load(self.path, format='parquet', engine=self.task._engine, **kwargs)
 
-    def dump_storage(self, function_output):
-        self.storage.save(self.path, function_output, format='parquet',)
+    def dump_storage(self, function_output, **kwargs):
+        if self.task._engine=='spark':
+            spark = self.task.get_spark_session()
+            if isinstance(function_output, pd.DataFrame):
+                function_output = spark.createDataFrame(function_output)
+            self.storage.save(self.path, function_output, format='parquet', engine=self.task._engine)
+        if self.task._engine == 'pandas':
+            if not isinstance(function_output, pd.DataFrame):
+                function_output = function_output.toPandas()
+            self.storage.save(self.path, function_output, format='parquet', engine=self.task._engine)
 
     def load_local(self, **kwargs):
-        return pd.read_parquet(self.path, **kwargs)
+        if self.task._engine=='pandas':
+            return pd.read_parquet(self.path, **kwargs)
+        spark = self.task.get_spark_session()
+        spark.read.load(self.path)
 
     def dump_local(self, function_output):
-        os.makedirs(os.path.dirname(self.path), exist_ok=True)
-        function_output.to_parquet(self.path)
-
+        if self.task._engine=='pandas':
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
+            function_output.to_parquet(self.path)
+        function_output.write.parquet(self.path)
 
 class KerasTarget(CloudTarget):
     FILE_EXT = 'h5'

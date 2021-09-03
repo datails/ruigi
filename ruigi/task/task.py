@@ -45,6 +45,7 @@ class Task(luigi.Task):
     TARGET_DIR = './TARGETS/'
     _target = PickleTarget
     _storage = None
+    _engine = 'pandas'
     requires_list = []
     requires_dict = {}
 
@@ -59,6 +60,10 @@ class Task(luigi.Task):
             return self.task_notebook
         else:
             return None
+
+    def get_spark_session(self):
+        raise ValueError('In order to use Spark, one SparkSession must be present. Implement a method '
+                         '"get_spark_session" in your Task class that returns a SparkSession object.')
 
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)

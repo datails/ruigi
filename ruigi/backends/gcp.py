@@ -35,7 +35,7 @@ class GoogleStorage:
         self.bucket = self.client.bucket(self.bucket_name)
 
 
-    def save(self, name, obj, format='pickle', chunk_size=None):
+    def save(self, name, obj, format='pickle', engine='pandas', chunk_size=None):
         """
         Args:
             name: `str`.
@@ -79,7 +79,7 @@ class GoogleStorage:
         blob.upload_from_filename(filename=local_file_name)
 
     @retry(_RETRY_LIST, tries=5)
-    def load(self, name, format='pickle', columns=None, chunk_size=None):
+    def load(self, name, format='pickle', columns=None, engine='pandas', spark=None, chunk_size=None):
         """
         Args:
             name: `str`.

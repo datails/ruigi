@@ -5,10 +5,19 @@ import pandas as pd
 import joblib
 from io import BytesIO
 import tempfile
+import shutil
 
 from azure.datalake.store import core, lib
+from azure.datalake.store.multithread import ADLUploader, ADLDownloader
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'ruigi')
+
+
+def delete_path(lpath):
+    if os.path.isdir(lpath):
+        shutil.rmtree(lpath)
+    if os.path.isfile(lpath):
+        os.remove(lpath)
 
 
 class ADLSStorage:
@@ -34,13 +43,17 @@ class ADLSStorage:
             self.client = core.AzureDLFileSystem(token=token, store_name=self.store_name)
 
     def _upload_local(self, local_file_name, remote_file_name):
-        self.client.put(local_file_name, remote_file_name)
+        ADLUploader(self.client, remote_file_name, local_file_name, verbose=False, overwrite=True)
+        # self.client.put(local_file_name, remote_file_name)
+
+    def _download_local(self, local_file_name, remote_file_name):
+        ADLDownloader(self.client, remote_file_name, local_file_name, verbose=False, overwrite=True)
 
     def _upload_buffer(self, buffer, remote_file_name):
         with self.client.open(remote_file_name, 'wb') as f:
             f.write(buffer.getvalue())
 
-    def save(self, name, obj, format='pickle', chunk_size=None):
+    def save(self, name, obj, format='pickle', engine='pandas', chunk_size=None):
         """ Save file to cloud
 
         Args:
@@ -62,14 +75,14 @@ class ADLSStorage:
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         if format == 'parquet':
-            if not isinstance(obj, pd.DataFrame):
-                # In case it is a Spark DF
-                obj = obj.toPandas()
             try:
-                obj.to_parquet(local_file_name)
-                self._upload_local(local_file_name, remote_file_name)
+                if engine == 'spark':
+                    obj.write.parquet(f"{self.base_url}/{remote_file_name}", mode='overwrite')
+                else:
+                    obj.to_parquet(local_file_name, compression='GZIP')
+                    self._upload_local(local_file_name, remote_file_name)
             finally:
-                os.remove(local_file_name)
+                delete_path(local_file_name)
 
         elif format == 'joblib':
             with BytesIO() as buffer:
@@ -84,7 +97,7 @@ class ADLSStorage:
                     pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
                 self._upload_local(local_file_name, remote_file_name)
             finally:
-                os.remove(local_file_name)
+                delete_path(local_file_name)
 
         elif format == 'file':
             self._upload_local(obj, remote_file_name)
@@ -93,7 +106,7 @@ class ADLSStorage:
             raise ValueError(
                 "Supported formats are pickle, joblib, file or parquet")
 
-    def load(self, name, format='pickle', columns=None, chunk_size=None):
+    def load(self, name, format='pickle', columns=None, engine='pandas', spark=None, chunk_size=None):
         """
         Args:
             name: `str`.
@@ -125,8 +138,15 @@ class ADLSStorage:
                 return joblib.load(fr)
 
         if format == 'parquet':
-            with self.client.open(remote_file_name, 'rb') as fr:
-                return pd.read_parquet(fr, columns=columns)
+            if engine == 'pandas':
+                try:
+                    self._download_local(local_file_name, remote_file_name)
+                    return pd.read_parquet(local_file_name)
+                finally:
+                    delete_path(local_file_name)
+            elif engine == 'spark':
+                return spark.read.parquet(f"{self.base_url}/{remote_file_name}")
+
 
         elif format == 'pickle':
             with self.client.open(remote_file_name, 'rb') as fr:
@@ -139,7 +159,7 @@ class ADLSStorage:
                         obj = pickle.load(gr)
                         return obj
                 finally:
-                    os.remove(local_file_name)
+                    delete_path(local_file_name)
         else:
             raise ValueError("Supported formats are pickle, joblib, file or parquet")
 
@@ -152,11 +172,12 @@ class ADLSStorage:
         return self.client.ls(path)
 
     def delete(self, name):
+        # TODO: Check behavior when removing a dir - it raised a PermissionError
         remote_file_name = '/'.join([self.parent_folder, name]) if self.parent_folder else name
         self.client.remove(remote_file_name)
 
         local_file_name = os.path.join(
             __TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
-        if os.path.isfile(local_file_name):
-            os.remove(local_file_name)
+        if os.path.exists(local_file_name):
+            delete_path(local_file_name)
